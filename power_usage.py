@@ -49,7 +49,12 @@ def get_current_usage_percentage():
 def power_usage():
     usage_percentage = get_current_usage_percentage()
     power_usage = calculate_power_usage(usage_percentage)
-    return jsonify({"power_usage": power_usage})
+
+    throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
+    throttled_state = throttled_state.decode("utf-8").strip()
+    throttled_hex = throttled_state.split('=')[1]
+
+    return jsonify({"power_usage": power_usage, "throttled_state": throttled_hex})
 
 @app.errorhandler(404)
 def page_not_found(e):
