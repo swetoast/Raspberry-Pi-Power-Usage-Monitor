@@ -51,17 +51,26 @@ Please make sure to update the `power_values` dictionary in the script with the 
 
 ```
 sensor:
+- platform: integration
+    source: sensor.example_power_usage
+    name: 'Example Energy Usage'
+    unit_prefix: k
+    unit_time: h
+
   - platform: rest
-    name: "Raspberry Pi Power Usage"
+    name: "Example Device: Endpoint"
     resource: "http://IP_ADDRESS:PORT/power_usage"
     value_template: "{{ value_json.power_usage }}"
     json_attributes:
-      - throttled_state
-      - core_voltage
-      - sdram_c_voltage
-      - sdram_i_voltage
-      - sdram_p_voltage
-    scan_interval: 60
+      - example_state
+      - example_voltage
+      - example_c_voltage
+      - example_i_voltage
+      - example_p_voltage
+    unit_of_measurement: 'W'
+    device_class: energy
+    state_class: measurement
+
 ```
 
 ## Contributing
