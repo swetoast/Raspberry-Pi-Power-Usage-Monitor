@@ -40,6 +40,18 @@ host = 127.0.0.1
 port = 5000
 ```
 
+## Homeassistant Example
+
+```
+sensor:
+  - platform: rest
+    name: Power Usage
+    resource: https://192.168.0.3/power_usage
+    value_template: '{{ value_json.power_usage }}'
+    unit_of_measurement: 'W'
+    scan_interval: 60
+```
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
