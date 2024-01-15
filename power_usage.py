@@ -45,6 +45,12 @@ def get_current_usage_percentage():
     usage_percentage = sum(cpu_percentages) / len(cpu_percentages)
     return usage_percentage
 
+def get_voltage(component):
+    voltage_info = subprocess.check_output(["vcgencmd", "measure_volts", component])
+    voltage_info = voltage_info.decode("utf-8").strip()
+    voltage = voltage_info.split('=')[1].replace('V', '')
+    return float(voltage)
+
 @app.route('/power_usage', methods=['GET'])
 def power_usage():
     usage_percentage = get_current_usage_percentage()
@@ -54,7 +60,19 @@ def power_usage():
     throttled_state = throttled_state.decode("utf-8").strip()
     throttled_hex = throttled_state.split('=')[1]
 
-    return jsonify({"power_usage": power_usage, "throttled_state": throttled_hex})
+    core_voltage = get_voltage("core")
+    sdram_c_voltage = get_voltage("sdram_c")
+    sdram_i_voltage = get_voltage("sdram_i")
+    sdram_p_voltage = get_voltage("sdram_p")
+
+    return jsonify({
+        "power_usage": power_usage,
+        "throttled_state": throttled_hex,
+        "core_voltage": core_voltage,
+        "sdram_c_voltage": sdram_c_voltage,
+        "sdram_i_voltage": sdram_i_voltage,
+        "sdram_p_voltage": sdram_p_voltage
+    })
 
 @app.errorhandler(404)
 def page_not_found(e):
