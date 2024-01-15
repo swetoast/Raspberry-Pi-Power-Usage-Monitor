@@ -29,6 +29,17 @@ Access the power usage information by navigating to the /power_usage route on yo
 
 Server configuration can be customized through the power_usage.conf file. The configuration includes settings for HTTPS, the certificate and key paths for SSL, and the host and port for the server.
 
+Here is an example of what the power_usage.conf file might look like:
+
+```
+[DEFAULT]
+https_enabled = True
+cert_path = /path/to/cert.pem
+key_path = /path/to/key.pem
+host = 127.0.0.1
+port = 5000
+```
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
