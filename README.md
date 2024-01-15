@@ -45,16 +45,17 @@ port = 5000
 ```
 sensor:
   - platform: rest
+    resource: http://IP_ADDRESS/power_usage
     name: Raspberry Pi Power Usage
-    resource: https://your_flask_app_url/power_usage
-    value_template: '{{ value_json.power_usage }}'
+    json_attributes:
+      - power_usage
+      - throttled_state
+      - core_voltage
+      - sdram_c_voltage
+      - sdram_i_voltage
+      - sdram_p_voltage
+    value_template: '{{ value_json["power_usage"] }}'
     unit_of_measurement: 'W'
-    scan_interval: 60
-  - platform: rest
-    name: Raspberry Pi Throttled State
-    resource: https://your_flask_app_url/power_usage
-    value_template: '{{ value_json.throttled_state }}'
-    scan_interval: 60
 ```
 
 ## Contributing
