@@ -68,5 +68,3 @@ if __name__ == '__main__':
     else:
         context = None
     app.run(host=host, port=port, debug=False, ssl_context=context)
-
-please print out the config for this script
