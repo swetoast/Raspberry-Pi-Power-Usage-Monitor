@@ -62,11 +62,12 @@ sensor:
     resource: "http://IP_ADDRESS:PORT/power_usage"
     value_template: "{{ value_json.power_usage }}"
     json_attributes:
-      - example_state
-      - example_voltage
-      - example_c_voltage
-      - example_i_voltage
-      - example_p_voltage
+      - power_usage
+      - throttled_state
+      - core_voltage
+      - sdram_c_voltage
+      - sdram_i_voltage
+      - sdram_p_voltage
     unit_of_measurement: 'W'
     device_class: energy
     state_class: measurement
