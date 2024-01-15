@@ -52,17 +52,45 @@ Please make sure to update the `power_values` dictionary in the script with the 
 ```
 sensor:
   - platform: rest
+    name: Power Usage
     resource: http://IP_ADDRESS/power_usage
-    name: Raspberry Pi Power Usage
-    json_attributes:
-      - power_usage
-      - throttled_state
-      - core_voltage
-      - sdram_c_voltage
-      - sdram_i_voltage
-      - sdram_p_voltage
-    value_template: '{{ value_json["power_usage"] }}'
+    value_template: '{{ value_json.power_usage }}'
     unit_of_measurement: 'W'
+    scan_interval: 60
+
+  - platform: rest
+    name: Throttled State
+    resource: http://IP_ADDRESS/power_usage
+    value_template: '{{ value_json.throttled_state }}'
+    scan_interval: 60
+
+  - platform: rest
+    name: Core Voltage
+    resource: http://IP_ADDRESS/power_usage
+    value_template: '{{ value_json.core_voltage }}'
+    unit_of_measurement: 'V'
+    scan_interval: 60
+
+  - platform: rest
+    name: SDRAM C Voltage
+    resource: http://IP_ADDRESS/power_usage
+    value_template: '{{ value_json.sdram_c_voltage }}'
+    unit_of_measurement: 'V'
+    scan_interval: 60
+
+  - platform: rest
+    name: SDRAM I Voltage
+    resource: http://IP_ADDRESS/power_usage
+    value_template: '{{ value_json.sdram_i_voltage }}'
+    unit_of_measurement: 'V'
+    scan_interval: 60
+
+  - platform: rest
+    name: SDRAM P Voltage
+    resource: http://IP_ADDRESS/power_usage
+    value_template: '{{ value_json.sdram_p_voltage }}'
+    unit_of_measurement: 'V'
+    scan_interval: 60
 ```
 
 ## Contributing
