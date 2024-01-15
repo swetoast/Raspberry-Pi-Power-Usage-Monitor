@@ -52,7 +52,7 @@ Please make sure to update the `power_values` dictionary in the script with the 
 ```
 sensor:
 - platform: integration
-    source: sensor.example_power_usage
+    source: sensor.example_device_endpoint
     name: 'Example Energy Usage'
     unit_prefix: k
     unit_time: h
