@@ -37,8 +37,8 @@ Here is an example of what the power_usage.conf file might look like:
 ```
 [DEFAULT]
 https_enabled = False
-cert_path = /path/to/cert.pem
-key_path = /path/to/key.pem
+cert_path = /path/to/cert.crt
+key_path = /path/to/key.key
 host = 127.0.0.1
 port = 5000
 ```
