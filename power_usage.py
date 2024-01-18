@@ -26,6 +26,10 @@ def get_model():
     model_info = model_info.split('Rev')[0].strip()
     return model_info
 
+def get_cpu_frequency():
+    cpu_freq = psutil.cpu_freq()
+    return cpu_freq.current
+
 model = get_model()
 
 if model not in power_values:
@@ -34,10 +38,10 @@ if model not in power_values:
 idle_power = power_values[model]["idle_power"]
 max_power = power_values[model]["max_power"]
 
-def calculate_power_usage(usage_percentage):
+def calculate_power_usage(usage_percentage, cpu_frequency):
     if usage_percentage < 0 or usage_percentage > 100:
         raise ValueError("Usage percentage should be between 0 and 100.")
-    power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100)
+    power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100) * (cpu_frequency / 1000)
     return power_usage
 
 def get_current_usage_percentage():
@@ -54,7 +58,8 @@ def get_voltage(component):
 @app.route('/power_usage', methods=['GET'])
 def power_usage():
     usage_percentage = get_current_usage_percentage()
-    power_usage = calculate_power_usage(usage_percentage)
+    cpu_frequency = get_cpu_frequency()
+    power_usage = calculate_power_usage(usage_percentage, cpu_frequency)
 
     throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
     throttled_state = throttled_state.decode("utf-8").strip()
@@ -71,7 +76,8 @@ def power_usage():
         "core_voltage": core_voltage,
         "sdram_c_voltage": sdram_c_voltage,
         "sdram_i_voltage": sdram_i_voltage,
-        "sdram_p_voltage": sdram_p_voltage
+        "sdram_p_voltage": sdram_p_voltage,
+        "cpu_frequency_mhz": cpu_frequency
     })
 
 @app.errorhandler(404)
