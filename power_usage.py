@@ -44,6 +44,11 @@ def get_max_frequency():
     cpu_freq = psutil.cpu_freq()
     return cpu_freq.max
 
+def get_cpu_temperature():
+    temperature_info = os.popen('vcgencmd measure_temp').readline()
+    temperature = float(temperature_info.replace("temp=","").replace("'C\n",""))
+    return temperature
+
 model = get_model()
 
 if model not in power_values:
@@ -88,6 +93,7 @@ def power_usage():
     sdram_c_voltage = get_voltage("sdram_c")
     sdram_i_voltage = get_voltage("sdram_i")
     sdram_p_voltage = get_voltage("sdram_p")
+    cpu_temperature = get_cpu_temperature()
 
     return jsonify({
         "power_usage": power_usage,
@@ -96,7 +102,8 @@ def power_usage():
         "sdram_c_voltage": sdram_c_voltage,
         "sdram_i_voltage": sdram_i_voltage,
         "sdram_p_voltage": sdram_p_voltage,
-        "cpu_frequency_mhz": cpu_frequency
+        "cpu_frequency_mhz": cpu_frequency,
+        "cpu_temperature": cpu_temperature
     })
 
 @app.errorhandler(404)
