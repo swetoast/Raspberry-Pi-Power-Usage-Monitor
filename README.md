@@ -68,6 +68,7 @@ sensor:
       - sdram_c_voltage
       - sdram_i_voltage
       - sdram_p_voltage
+      - cpu_frequency_mhz
     unit_of_measurement: 'W'
     device_class: energy
     state_class: measurement
