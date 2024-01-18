@@ -1,6 +1,6 @@
 # Raspberry Pi Power Usage Monitor
 
-This script is a Flask application that monitors the power usage of a Raspberry Pi. It calculates the power usage based on the CPU usage percentage and the idle and max power values of the specific Raspberry Pi model.
+This Flask application monitors the power usage of a Raspberry Pi. It calculates the power usage based on the CPU usage percentage and the idle and max power values of the specific Raspberry Pi model.
 
 ## Features
 
@@ -30,11 +30,9 @@ The `power_usage.conf` file should contain the following settings:
 - `host`: The host on which the application should run.
 - `port`: The port on which the application should listen.
 
-Server configuration can be customized through the power_usage.conf file. The configuration includes settings for HTTPS, the certificate and key paths for SSL, and the host and port for the server.
+Here is an example of what the `power_usage.conf` file might look like:
 
-Here is an example of what the power_usage.conf file might look like:
-
-```
+```ini
 [DEFAULT]
 https_enabled = False
 cert_path = /path/to/cert.crt
@@ -49,7 +47,9 @@ Please make sure to update the `power_values` dictionary in the script with the 
 
 ## Homeassistant Example
 
-```
+You can integrate this application with Home Assistant using the following configuration:
+
+```yaml
 sensor:
 - platform: integration
     source: sensor.example_device_endpoint
@@ -72,7 +72,6 @@ sensor:
     unit_of_measurement: 'W'
     device_class: energy
     state_class: measurement
-
 ```
 
 ## Contributing
