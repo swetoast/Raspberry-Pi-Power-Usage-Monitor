@@ -3,6 +3,8 @@ import psutil
 import platform
 import subprocess
 import configparser
+import logging
+import os
 
 app = Flask(__name__)
 
@@ -21,10 +23,14 @@ power_values = {
 }
 
 def get_model():
-    model_info = subprocess.check_output(["cat", "/proc/device-tree/model"])
-    model_info = model_info.decode("utf-8")
-    model_info = model_info.split('Rev')[0].strip()
-    return model_info
+    try:
+        model_info = subprocess.run(["cat", "/proc/device-tree/model"], check=True, capture_output=True, text=True)
+        model_info = model_info.stdout
+        model_info = model_info.split('Rev')[0].strip()
+        return model_info
+    except Exception as e:
+        logging.error(f"Error getting model: {e}")
+        return None
 
 def get_cpu_frequency():
     cpu_freq = psutil.cpu_freq()
@@ -50,21 +56,23 @@ def get_current_usage_percentage():
     return usage_percentage
 
 def get_voltage(component):
-    voltage_info = subprocess.check_output(["vcgencmd", "measure_volts", component])
-    voltage_info = voltage_info.decode("utf-8").strip()
-    voltage = voltage_info.split('=')[1].replace('V', '')
-    return float(voltage)
+    try:
+        voltage_info = subprocess.run(["vcgencmd", "measure_volts", component], check=True, capture_output=True, text=True)
+        voltage_info = voltage_info.stdout.strip()
+        voltage = voltage_info.split('=')[1].replace('V', '')
+        return float(voltage)
+    except Exception as e:
+        logging.error(f"Error getting voltage: {e}")
+        return None
 
 @app.route('/power_usage', methods=['GET'])
 def power_usage():
     usage_percentage = get_current_usage_percentage()
     cpu_frequency = get_cpu_frequency()
     power_usage = calculate_power_usage(usage_percentage, cpu_frequency)
-
     throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
     throttled_state = throttled_state.decode("utf-8").strip()
     throttled_hex = throttled_state.split('=')[1]
-
     core_voltage = get_voltage("core")
     sdram_c_voltage = get_voltage("sdram_c")
     sdram_i_voltage = get_voltage("sdram_i")
@@ -86,12 +94,14 @@ def page_not_found(e):
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('power_usage.conf')
-    https_enabled = config.getboolean('DEFAULT', 'https_enabled')
-    cert_path = config.get('DEFAULT', 'cert_path')
-    key_path = config.get('DEFAULT', 'key_path')
-    host = config.get('DEFAULT', 'host')
-    port = config.getint('DEFAULT', 'port')
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    config_path = os.path.join(dir_path, 'power_usage.conf')
+    config.read(config_path)
+    https_enabled = config.getboolean('DEFAULT', 'https_enabled', fallback=False)
+    cert_path = config.get('DEFAULT', 'cert_path', fallback=None)
+    key_path = config.get('DEFAULT', 'key_path', fallback=None)
+    host = config.get('DEFAULT', 'host', fallback='127.0.0.1')
+    port = config.getint('DEFAULT', 'port', fallback=5000)
     if https_enabled:
         context = (cert_path, key_path)
     else:
