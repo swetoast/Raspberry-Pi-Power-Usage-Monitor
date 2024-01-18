@@ -36,6 +36,14 @@ def get_cpu_frequency():
     cpu_freq = psutil.cpu_freq()
     return cpu_freq.current
 
+def get_min_frequency():
+    cpu_freq = psutil.cpu_freq()
+    return cpu_freq.min
+
+def get_max_frequency():
+    cpu_freq = psutil.cpu_freq()
+    return cpu_freq.max
+
 model = get_model()
 
 if model not in power_values:
@@ -44,10 +52,11 @@ if model not in power_values:
 idle_power = power_values[model]["idle_power"]
 max_power = power_values[model]["max_power"]
 
-def calculate_power_usage(usage_percentage, cpu_frequency):
+def calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency):
     if usage_percentage < 0 or usage_percentage > 100:
         raise ValueError("Usage percentage should be between 0 and 100.")
-    power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100) * (cpu_frequency / 1000)
+    relative_frequency = (cpu_frequency - min_frequency) / (max_frequency - min_frequency)
+    power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100) * relative_frequency
     return power_usage
 
 def get_current_usage_percentage():
@@ -69,7 +78,9 @@ def get_voltage(component):
 def power_usage():
     usage_percentage = get_current_usage_percentage()
     cpu_frequency = get_cpu_frequency()
-    power_usage = calculate_power_usage(usage_percentage, cpu_frequency)
+    min_frequency = get_min_frequency()
+    max_frequency = get_max_frequency()
+    power_usage = calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency)
     throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
     throttled_state = throttled_state.decode("utf-8").strip()
     throttled_hex = throttled_state.split('=')[1]
