@@ -4,9 +4,9 @@ This Flask application monitors the power usage of a Raspberry Pi. It calculates
 
 ## Features
 
-- **Power Usage Calculation**: The script calculates the power usage based on the CPU usage percentage and the idle and max power values of the specific Raspberry Pi model.
-- **Voltage Measurement**: The script measures the voltage of various components of the Raspberry Pi.
-- **Throttled State**: The script retrieves the throttled state of the Raspberry Pi.
+- **Power Usage Calculation**: The application calculates the power usage based on the CPU usage percentage and the idle and max power values of the specific Raspberry Pi model.
+- **Voltage Measurement**: The application measures the voltage of various components of the Raspberry Pi.
+- **Throttled State**: The application retrieves the throttled state of the Raspberry Pi.
 
 ## API Endpoints
 
@@ -14,7 +14,7 @@ This Flask application monitors the power usage of a Raspberry Pi. It calculates
 
 ## Error Handling
 
-- The script redirects all 404 errors to the `/power_usage` endpoint.
+- The application redirects all 404 errors to the `/power_usage` endpoint.
 
 ## Running the Application
 
@@ -32,7 +32,7 @@ The `power_usage.conf` file should contain the following settings:
 
 Here is an example of what the `power_usage.conf` file might look like:
 
-```ini
+```conf
 [DEFAULT]
 https_enabled = False
 cert_path = /path/to/cert.crt
@@ -41,11 +41,7 @@ host = 127.0.0.1
 port = 5000
 ```
 
-## Note
-
-Please make sure to update the `power_values` dictionary in the script with the correct idle and max power values for your specific Raspberry Pi model.
-
-## Homeassistant Example
+## Homeassistant Integration
 
 You can integrate this application with Home Assistant using the following configuration:
 
@@ -76,4 +72,4 @@ sensor:
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome. For major changes, please open an issue first to discuss what you would like to change.
