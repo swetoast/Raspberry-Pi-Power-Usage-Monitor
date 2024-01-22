@@ -73,3 +73,7 @@ sensor:
 ## Contributing
 
 Contributions are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## Support
+
+If you find these lists useful, please consider giving me a star on GitHub!
