@@ -1,0 +1,92 @@
+blueprint:
+  name: Notification: Raspberry Pi Performance Issue
+  description: >
+    This blueprint provides a personal guardian for your device. It monitors the device's performance and sends an alert if it detects throttling. The alert includes detailed information about the device's state. This blueprint is designed to work with any device that has the necessary sensors.
+  domain: automation
+  input:
+    raspberry_pi_sensor:
+      name: Device Sensor
+      description: The sensor entity for the device
+      selector:
+        entity:
+          domain: sensor
+    person_entity:
+      name: Person Entity
+      description: The person entity to check the home status
+      selector:
+        entity:
+          domain: person
+    mobile_device:
+      name: Mobile Device
+      description: The mobile device to send the notification
+      selector:
+        entity:
+          domain: notify
+    start_time:
+      name: Start Time
+      description: The start time for the automation
+      default: "08:00:00"
+      selector:
+        time:
+    end_time:
+      name: End Time
+      description: The end time for the automation
+      default: "22:00:00"
+      selector:
+        time:
+    termux_action:
+      name: Termux Action
+      description: Whether to include the Termux action in the alert
+      default: true
+      selector:
+        boolean:
+    local_push:
+      name: Local Push
+      description: Whether to send a local push notification
+      default: true
+      selector:
+        boolean:
+
+trigger:
+  - platform: state
+    entity_id: !input 'raspberry_pi_sensor'
+    attribute: throttled_state
+    from: "0x0"
+condition:
+  - condition: time
+    after: !input 'start_time'
+    before: !input 'end_time'
+  - condition: template
+    value_template: "{{ states(!input 'raspberry_pi_sensor') != 'unavailable' }}"
+action:
+  - service: !input 'mobile_device'
+    data:
+      message: >-
+        Device is having issues! Throttled State: {{
+        state_attr(!input 'raspberry_pi_sensor', 'throttled_state')
+        }}. CPU Temp: {{ state_attr(!input 'raspberry_pi_sensor',
+        'cpu_temperature') }}°C. CPU Freq: {{
+        state_attr(!input 'raspberry_pi_sensor',
+        'cpu_frequency_mhz') }} MHz. Core Voltage: {{
+        state_attr(!input 'raspberry_pi_sensor', 'core_voltage')
+        }}V. SDRAM C Voltage: {{
+        state_attr(!input 'raspberry_pi_sensor', 'sdram_c_voltage')
+        }}V. SDRAM I Voltage: {{
+        state_attr(!input 'raspberry_pi_sensor', 'sdram_i_voltage')
+        }}V. SDRAM P Voltage: {{
+        state_attr(!input 'raspberry_pi_sensor', 'sdram_p_voltage')
+        }}V.
+      title: Device Alert
+      data:
+        ttl: 0
+        tag: device_alert
+        icon: mdi:raspberry-pi
+        color: red
+        local_push: "{{ is_state('input_boolean.local_push', 'on') }}"
+        actions: >
+          {% if is_state('input_boolean.termux_action', 'on') %}
+          - action: URI
+            title: Open Termux
+            uri: app://com.termux.styling
+          {% endif %}
+mode: single
