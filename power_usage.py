@@ -8,92 +8,101 @@ import os
 
 app = Flask(__name__)
 
-power_values = {
-    "Raspberry Pi 3 Model B Plus": {"idle_power": 1.15, "max_power": 3.6},
-    "Raspberry Pi 4 Model B": {"idle_power": 3.0, "max_power": 6.0},
-    "Raspberry Pi 2 Model B": {"idle_power": 1.15, "max_power": 3.0},
-    "Raspberry Pi Zero": {"idle_power": 0.1, "max_power": 1.2},
-    "Raspberry Pi Zero W": {"idle_power": 0.3, "max_power": 1.3},
-    "Raspberry Pi 3 Model A Plus": {"idle_power": 1.2, "max_power": 3.8},
-    "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 6.4},
-    "Raspberry Pi 1 Model B": {"idle_power": 0.7, "max_power": 2.5},
-    "Raspberry Pi 1 Model A": {"idle_power": 0.5, "max_power": 2.0},
-    "Raspberry Pi 1 Model B+": {"idle_power": 0.7, "max_power": 2.5},
-    "Raspberry Pi 1 Model A+": {"idle_power": 0.5, "max_power": 2.0},
-}
+class RaspberryPi:
+    power_values = {
+        "Raspberry Pi 3 Model B Plus": {"idle_power": 1.15, "max_power": 3.6},
+        "Raspberry Pi 4 Model B": {"idle_power": 3.0, "max_power": 6.0},
+        "Raspberry Pi 2 Model B": {"idle_power": 1.15, "max_power": 3.0},
+        "Raspberry Pi Zero": {"idle_power": 0.1, "max_power": 1.2},
+        "Raspberry Pi Zero W": {"idle_power": 0.3, "max_power": 1.3},
+        "Raspberry Pi 3 Model A Plus": {"idle_power": 1.2, "max_power": 3.8},
+        "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 6.4},
+        "Raspberry Pi 1 Model B": {"idle_power": 0.7, "max_power": 2.5},
+        "Raspberry Pi 1 Model A": {"idle_power": 0.5, "max_power": 2.0},
+        "Raspberry Pi 1 Model B+": {"idle_power": 0.7, "max_power": 2.5},
+        "Raspberry Pi 1 Model A+": {"idle_power": 0.5, "max_power": 2.0},
+    }
 
-def get_model():
-    try:
-        model_info = subprocess.run(["cat", "/proc/device-tree/model"], check=True, capture_output=True, text=True)
-        model_info = model_info.stdout
-        model_info = model_info.split('Rev')[0].strip()
-        return model_info
-    except Exception as e:
-        logging.error(f"Error getting model: {e}")
-        return None
+    def __init__(self):
+        self.model = self.get_model()
+        if self.model not in self.power_values:
+            raise ValueError(f"Power values for {self.model} are not defined.")
+        self.idle_power = self.power_values[self.model]["idle_power"]
+        self.max_power = self.power_values[self.model]["max_power"]
 
-def get_cpu_frequency():
-    cpu_freq = psutil.cpu_freq()
-    return cpu_freq.current
+    @staticmethod
+    def get_model():
+        try:
+            model_info = subprocess.run(["cat", "/proc/device-tree/model"], check=True, capture_output=True, text=True)
+            model_info = model_info.stdout
+            model_info = model_info.split('Rev')[0].strip()
+            return model_info
+        except Exception as e:
+            logging.error(f"Error getting model: {e}")
+            return None
 
-def get_min_frequency():
-    cpu_freq = psutil.cpu_freq()
-    return cpu_freq.min
+    @staticmethod
+    def get_cpu_frequency():
+        cpu_freq = psutil.cpu_freq()
+        return cpu_freq.current
 
-def get_max_frequency():
-    cpu_freq = psutil.cpu_freq()
-    return cpu_freq.max
+    @staticmethod
+    def get_min_frequency():
+        cpu_freq = psutil.cpu_freq()
+        return cpu_freq.min
 
-def get_cpu_temperature():
-    temperature_info = os.popen('vcgencmd measure_temp').readline()
-    temperature = float(temperature_info.replace("temp=","").replace("'C\n",""))
-    return temperature
+    @staticmethod
+    def get_max_frequency():
+        cpu_freq = psutil.cpu_freq()
+        return cpu_freq.max
 
-model = get_model()
+    @staticmethod
+    def get_cpu_temperature():
+        temperature_info = os.popen('vcgencmd measure_temp').readline()
+        temperature = float(temperature_info.replace("temp=","").replace("'C\n",""))
+        return temperature
 
-if model not in power_values:
-    raise ValueError(f"Power values for {model} are not defined.")
+    @staticmethod
+    def calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency, idle_power, max_power):
+        if usage_percentage < 0 or usage_percentage > 100:
+            raise ValueError("Usage percentage should be between 0 and 100.")
+        relative_frequency = (cpu_frequency - min_frequency) / (max_frequency - min_frequency)
+        power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100) * relative_frequency
+        return power_usage
 
-idle_power = power_values[model]["idle_power"]
-max_power = power_values[model]["max_power"]
+    @staticmethod
+    def get_current_usage_percentage():
+        cpu_percentages = psutil.cpu_percent(percpu=True)
+        usage_percentage = sum(cpu_percentages) / len(cpu_percentages)
+        return usage_percentage
 
-def calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency):
-    if usage_percentage < 0 or usage_percentage > 100:
-        raise ValueError("Usage percentage should be between 0 and 100.")
-    relative_frequency = (cpu_frequency - min_frequency) / (max_frequency - min_frequency)
-    power_usage = idle_power + (max_power - idle_power) * (usage_percentage / 100) * relative_frequency
-    return power_usage
-
-def get_current_usage_percentage():
-    cpu_percentages = psutil.cpu_percent(percpu=True)
-    usage_percentage = sum(cpu_percentages) / len(cpu_percentages)
-    return usage_percentage
-
-def get_voltage(component):
-    try:
-        voltage_info = subprocess.run(["vcgencmd", "measure_volts", component], check=True, capture_output=True, text=True)
-        voltage_info = voltage_info.stdout.strip()
-        voltage = voltage_info.split('=')[1].replace('V', '')
-        return float(voltage)
-    except Exception as e:
-        logging.error(f"Error getting voltage: {e}")
-        return None
+    @staticmethod
+    def get_voltage(component):
+        try:
+            voltage_info = subprocess.run(["vcgencmd", "measure_volts", component], check=True, capture_output=True, text=True)
+            voltage_info = voltage_info.stdout.strip()
+            voltage = voltage_info.split('=')[1].replace('V', '')
+            return float(voltage)
+        except Exception as e:
+            logging.error(f"Error getting voltage: {e}")
+            return None
 
 @app.route('/power_usage', methods=['GET'])
 def power_usage():
-    usage_percentage = get_current_usage_percentage()
-    cpu_frequency = get_cpu_frequency()
-    min_frequency = get_min_frequency()
-    max_frequency = get_max_frequency()
-    power_usage = calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency)
+    pi = RaspberryPi()
+    usage_percentage = pi.get_current_usage_percentage()
+    cpu_frequency = pi.get_cpu_frequency()
+    min_frequency = pi.get_min_frequency()
+    max_frequency = pi.get_max_frequency()
+    power_usage = pi.calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency, pi.idle_power, pi.max_power)
     throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
     throttled_state = throttled_state.decode("utf-8").strip()
     throttled_hex = throttled_state.split('=')[1]
-    core_voltage = get_voltage("core")
-    sdram_c_voltage = get_voltage("sdram_c")
-    sdram_i_voltage = get_voltage("sdram_i")
-    sdram_p_voltage = get_voltage("sdram_p")
-    cpu_temperature = get_cpu_temperature()
+    core_voltage = pi.get_voltage("core")
+    sdram_c_voltage = pi.get_voltage("sdram_c")
+    sdram_i_voltage = pi.get_voltage("sdram_i")
+    sdram_p_voltage = pi.get_voltage("sdram_p")
+    cpu_temperature = pi.get_cpu_temperature()
 
     return jsonify({
         "power_usage": power_usage,
