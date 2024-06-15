@@ -6,8 +6,6 @@ import configparser
 import logging
 import os
 
-app = Flask(__name__)
-
 class RaspberryPi:
     power_values = {
         "Raspberry Pi 3 Model B Plus": {"idle_power": 1.15, "max_power": 3.6},
@@ -87,50 +85,60 @@ class RaspberryPi:
             logging.error(f"Error getting voltage: {e}")
             return None
 
-@app.route('/power_usage', methods=['GET'])
-def power_usage():
-    pi = RaspberryPi()
-    usage_percentage = pi.get_current_usage_percentage()
-    cpu_frequency = pi.get_cpu_frequency()
-    min_frequency = pi.get_min_frequency()
-    max_frequency = pi.get_max_frequency()
-    power_usage = pi.calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency, pi.idle_power, pi.max_power)
-    throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
-    throttled_state = throttled_state.decode("utf-8").strip()
-    throttled_hex = throttled_state.split('=')[1]
-    core_voltage = pi.get_voltage("core")
-    sdram_c_voltage = pi.get_voltage("sdram_c")
-    sdram_i_voltage = pi.get_voltage("sdram_i")
-    sdram_p_voltage = pi.get_voltage("sdram_p")
-    cpu_temperature = pi.get_cpu_temperature()
+class PowerUsageApp:
+    def __init__(self):
+        self.app = Flask(__name__)
+        self.pi = RaspberryPi()
+        self.setup_routes()
 
-    return jsonify({
-        "power_usage": power_usage,
-        "throttled_state": throttled_hex,
-        "core_voltage": core_voltage,
-        "sdram_c_voltage": sdram_c_voltage,
-        "sdram_i_voltage": sdram_i_voltage,
-        "sdram_p_voltage": sdram_p_voltage,
-        "cpu_frequency_mhz": cpu_frequency,
-        "cpu_temperature": cpu_temperature
-    })
+    def setup_routes(self):
+        @self.app.route('/power_usage', methods=['GET'])
+        def power_usage():
+            usage_percentage = self.pi.get_current_usage_percentage()
+            cpu_frequency = self.pi.get_cpu_frequency()
+            min_frequency = self.pi.get_min_frequency()
+            max_frequency = self.pi.get_max_frequency()
+            power_usage = self.pi.calculate_power_usage(usage_percentage, cpu_frequency, min_frequency, max_frequency, self.pi.idle_power, self.pi.max_power)
+            throttled_state = subprocess.check_output(["vcgencmd", "get_throttled"])
+            throttled_state = throttled_state.decode("utf-8").strip()
+            throttled_hex = throttled_state.split('=')[1]
+            core_voltage = self.pi.get_voltage("core")
+            sdram_c_voltage = self.pi.get_voltage("sdram_c")
+            sdram_i_voltage = self.pi.get_voltage("sdram_i")
+            sdram_p_voltage = self.pi.get_voltage("sdram_p")
+            cpu_temperature = self.pi.get_cpu_temperature()
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return redirect(url_for('power_usage')), 302
+            return jsonify({
+                "power_usage": power_usage,
+                "throttled_state": throttled_hex,
+                "core_voltage": core_voltage,
+                "sdram_c_voltage": sdram_c_voltage,
+                "sdram_i_voltage": sdram_i_voltage,
+                "sdram_p_voltage": sdram_p_voltage,
+                "cpu_frequency_mhz": cpu_frequency,
+                "cpu_temperature": cpu_temperature
+            })
+
+        @self.app.errorhandler(404)
+        def page_not_found(e):
+            return redirect(url_for('power_usage')), 302
+
+    def run(self):
+        config = configparser.ConfigParser()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        config_path = os.path.join(dir_path, 'power_usage.conf')
+        config.read(config_path)
+        https_enabled = config.getboolean('DEFAULT', 'https_enabled', fallback=False)
+        cert_path = config.get('DEFAULT', 'cert_path', fallback=None)
+        key_path = config.get('DEFAULT', 'key_path', fallback=None)
+        host = config.get('DEFAULT', 'host', fallback='127.0.0.1')
+        port = config.getint('DEFAULT', 'port', fallback=5000)
+        if https_enabled:
+            context = (cert_path, key_path)
+        else:
+            context = None
+        self.app.run(host=host, port=port, debug=False, ssl_context=context)
 
 if __name__ == '__main__':
-    config = configparser.ConfigParser()
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    config_path = os.path.join(dir_path, 'power_usage.conf')
-    config.read(config_path)
-    https_enabled = config.getboolean('DEFAULT', 'https_enabled', fallback=False)
-    cert_path = config.get('DEFAULT', 'cert_path', fallback=None)
-    key_path = config.get('DEFAULT', 'key_path', fallback=None)
-    host = config.get('DEFAULT', 'host', fallback='127.0.0.1')
-    port = config.getint('DEFAULT', 'port', fallback=5000)
-    if https_enabled:
-        context = (cert_path, key_path)
-    else:
-        context = None
-    app.run(host=host, port=port, debug=False, ssl_context=context)
+    app = PowerUsageApp()
+    app.run()
