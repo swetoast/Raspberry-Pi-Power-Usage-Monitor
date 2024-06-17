@@ -14,7 +14,7 @@ class RaspberryPi:
         "Raspberry Pi Zero": {"idle_power": 0.1, "max_power": 1.2},
         "Raspberry Pi Zero W": {"idle_power": 0.3, "max_power": 1.3},
         "Raspberry Pi 3 Model A Plus": {"idle_power": 1.2, "max_power": 3.8},
-        "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 6.4},
+        "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 7.5},
         "Raspberry Pi 1 Model B": {"idle_power": 0.7, "max_power": 2.5},
         "Raspberry Pi 1 Model A": {"idle_power": 0.5, "max_power": 2.0},
         "Raspberry Pi 1 Model B+": {"idle_power": 0.7, "max_power": 2.5},
