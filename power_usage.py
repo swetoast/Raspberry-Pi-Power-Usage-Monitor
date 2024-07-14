@@ -14,7 +14,7 @@ class RaspberryPi:
         "Raspberry Pi Zero": {"idle_power": 0.1, "max_power": 1.2},
         "Raspberry Pi Zero W": {"idle_power": 0.3, "max_power": 1.3},
         "Raspberry Pi 3 Model A Plus": {"idle_power": 1.2, "max_power": 3.8},
-        "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 7.5},
+        "Raspberry Pi 5 Model B": {"idle_power": 2.7, "max_power": 7.5, "max_power_nvme": 15.0},
         "Raspberry Pi 1 Model B": {"idle_power": 0.7, "max_power": 2.5},
         "Raspberry Pi 1 Model A": {"idle_power": 0.5, "max_power": 2.0},
         "Raspberry Pi 1 Model B+": {"idle_power": 0.7, "max_power": 2.5},
@@ -27,6 +27,8 @@ class RaspberryPi:
             raise ValueError(f"Power values for {self.model} are not defined.")
         self.idle_power = self.power_values[self.model]["idle_power"]
         self.max_power = self.power_values[self.model]["max_power"]
+        if self.model == "Raspberry Pi 5 Model B" and self.is_nvme_boot():
+            self.max_power = self.power_values[self.model]["max_power_nvme"]
 
     @staticmethod
     def get_model():
@@ -38,6 +40,15 @@ class RaspberryPi:
         except Exception as e:
             logging.error(f"Error getting model: {e}")
             return None
+
+    @staticmethod
+    def is_nvme_boot():
+        try:
+            root_device = os.popen('findmnt -n -o SOURCE /').readline().strip()
+            return root_device.startswith('/dev/nvme')
+        except Exception as e:
+            logging.error(f"Error checking NVMe boot: {e}")
+            return False
 
     @staticmethod
     def get_cpu_frequency():
