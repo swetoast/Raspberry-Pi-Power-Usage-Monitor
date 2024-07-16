@@ -139,11 +139,11 @@ class PowerUsageApp:
         dir_path = os.path.dirname(os.path.realpath(__file__))
         config_path = os.path.join(dir_path, 'power_usage.conf')
         config.read(config_path)
-        https_enabled = config.getboolean('DEFAULT', 'https_enabled', fallback=False)
-        cert_path = config.get('DEFAULT', 'cert_path', fallback=None)
-        key_path = config.get('DEFAULT', 'key_path', fallback=None)
-        host = config.get('DEFAULT', 'host', fallback='127.0.0.1')
-        port = config.getint('DEFAULT', 'port', fallback=5000)
+        https_enabled = config.getboolean('SETTINGS', 'https_enabled')
+        cert_path = config.get('SETTINGS', 'cert_path')
+        key_path = config.get('SETTINGS', 'key_path')
+        host = config.get('SETTINGS', 'host')
+        port = config.getint('SETTINGS', 'port')
         if https_enabled:
             context = (cert_path, key_path)
         else:
