@@ -96,6 +96,20 @@ class RaspberryPi:
             logging.error(f"Error getting voltage: {e}")
             return None
 
+    def get_additional_values(self):
+        if self.model != "Raspberry Pi 5 Model B":
+            return {}
+        values = {}
+        try:
+            adc_output = subprocess.run(["vcgencmd", "pmic_read_adc"], check=True, capture_output=True, text=True).stdout.strip()
+            for line in adc_output.split("\n"):
+                if line:
+                    key, value = line.split("=")
+                    values[key.strip()] = float(value.strip().replace("A", "").replace("V", ""))
+        except Exception as e:
+            logging.error(f"Error getting additional values: {e}")
+        return values
+
 class PowerUsageApp:
     def __init__(self):
         self.app = Flask(__name__)
@@ -118,8 +132,9 @@ class PowerUsageApp:
             sdram_i_voltage = self.pi.get_voltage("sdram_i")
             sdram_p_voltage = self.pi.get_voltage("sdram_p")
             cpu_temperature = self.pi.get_cpu_temperature()
+            additional_values = self.pi.get_additional_values()
 
-            return jsonify({
+            response = {
                 "power_usage": power_usage,
                 "throttled_state": throttled_hex,
                 "core_voltage": core_voltage,
@@ -127,8 +142,10 @@ class PowerUsageApp:
                 "sdram_i_voltage": sdram_i_voltage,
                 "sdram_p_voltage": sdram_p_voltage,
                 "cpu_frequency_mhz": cpu_frequency,
-                "cpu_temperature": cpu_temperature
-            })
+                "cpu_temperature": cpu_temperature,
+                **additional_values
+            }
+            return jsonify(response)
 
         @self.app.errorhandler(404)
         def page_not_found(e):
